@@ -1,0 +1,154 @@
+hive.external_files - > blusapphire-hive-uae
+hive.blu_hive_view_uae -> blusapphire-hive-view-uae
+iceberg.bluevents - > blu-rawevents-uae
+
+CREATE SCHEMA hive.external_files
+    WITH (location = 's3://blusapphire-hive-uae/');
+
+CREATE SCHEMA hive.blu_hive_view
+    WITH (location = 's3://blusapphire-hive-view-uae/');
+    
+CREATE SCHEMA iceberg.bluevents
+    WITH (location = 's3://blu-rawevents-uae/');
+        
+Now, we are creating raw tables which are containg raw data like uuid and event.
+This is the table how to create.
+
+EXAMPLE:
+CREATE TABLE IF NOT EXISTS hive.external_files.ads_raw (
+    json_string VARCHAR
+)
+WITH (
+    format = 'TEXTFILE',
+    external_location = 's3://blusapphire-prod1-raw-events/logs/ads'
+);
+
+external_location define the logs in that particular path.
+
+Then, have to create views using raw files.
+
+EXAMPLE:
+CREATE VIEW hive.blu_hive_view.hive_ads_view AS
+SELECT
+json_extract_scalar(json_string, '$.uuid') AS "uuid",
+json_extract_scalar(json_string, '$.event') AS "event",
+"$path" AS "path"
+FROM hive.external_files.ads_raw;
+
+Now, create tables in the iceberg.bluevents schema.
+
+DROP VIEW IF EXISTS "fb814937_alert"; 
+DROP VIEW IF EXISTS "fb814937_ads";      
+DROP VIEW IF EXISTS "fb814937_auth";   
+DROP VIEW IF EXISTS "fb814937_cloud_aws";   
+DROP VIEW IF EXISTS "fb814937_cloud_azure"; 
+DROP VIEW IF EXISTS "fb814937_dns";        
+DROP VIEW IF EXISTS "fb814937_edr";        
+DROP VIEW IF EXISTS "fb814937_epp";        
+DROP VIEW IF EXISTS "fb814937_flow";      
+DROP VIEW IF EXISTS "fb814937_ips";        
+DROP VIEW IF EXISTS "fb814937_lb";        
+DROP VIEW IF EXISTS "fb814937_linux";     
+DROP VIEW IF EXISTS "fb814937_nac";      
+DROP VIEW IF EXISTS "fb814937_nbad";      
+DROP VIEW IF EXISTS "fb814937_network";    
+DROP VIEW IF EXISTS "fb814937_ngfw";    
+DROP VIEW IF EXISTS "fb814937_proxy_mail";
+DROP VIEW IF EXISTS "fb814937_proxy_web";
+DROP VIEW IF EXISTS "fb814937_ra"; 
+DROP VIEW IF EXISTS "fb814937_wireless";
+DROP VIEW IF EXISTS "fb814937_nas";
+DROP VIEW IF EXISTS "fb814937_windows";
+DROP VIEW IF EXISTS "fb814937_fallback";
+
+DROP VIEW IF EXISTS "fb814937_webserver"
+DROP VIEW IF EXISTS "fb814937_cloud_gcp";
+
+
+
+
+CREATE VIEW iceberg.blusapphire_view."fb814937_ads" AS SELECT * FROM iceberg.bluevents.ads WHERE "organization.id"='fb814937';
+CREATE VIEW iceberg.blusapphire_view."fb814937_auth" AS SELECT * FROM iceberg.bluevents.auth WHERE "organization.id"='fb814937';
+CREATE VIEW iceberg.blusapphire_view."fb814937_cloud_aws" AS SELECT * FROM iceberg.bluevents.cloud_aws WHERE "organization.id"='fb814937';
+CREATE VIEW iceberg.blusapphire_view."fb814937_cloud_azure" AS SELECT * FROM iceberg.bluevents.cloud_azure WHERE "organization.id"='fb814937';
+CREATE VIEW iceberg.blusapphire_view."fb814937_dns" AS SELECT * FROM iceberg.bluevents.dns WHERE "organization.id"='fb814937';
+CREATE VIEW iceberg.blusapphire_view."fb814937_edr" AS SELECT * FROM iceberg.bluevents.edr WHERE "organization.id"='fb814937';
+CREATE VIEW iceberg.blusapphire_view."fb814937_epp" AS SELECT * FROM iceberg.bluevents.epp WHERE "organization.id"='fb814937';
+CREATE VIEW iceberg.blusapphire_view."fb814937_flow" AS SELECT * FROM iceberg.bluevents.flow WHERE "organization.id"='fb814937';
+CREATE VIEW iceberg.blusapphire_view."fb814937_ips" AS SELECT * FROM iceberg.bluevents.ips WHERE "organization.id"='fb814937';
+CREATE VIEW iceberg.blusapphire_view."fb814937_lb" AS SELECT * FROM iceberg.bluevents.lb WHERE "organization.id"='fb814937';
+CREATE VIEW iceberg.blusapphire_view."fb814937_linux" AS SELECT * FROM iceberg.bluevents.linux WHERE "organization.id"='fb814937';
+CREATE VIEW iceberg.blusapphire_view."fb814937_nac" AS SELECT * FROM iceberg.bluevents.nac WHERE "organization.id"='fb814937';
+CREATE VIEW iceberg.blusapphire_view."fb814937_nbad" AS SELECT * FROM iceberg.bluevents.nbad WHERE "organization.id"='fb814937';
+CREATE VIEW iceberg.blusapphire_view."fb814937_network" AS SELECT * FROM iceberg.bluevents.network WHERE "organization.id"='fb814937';
+CREATE VIEW iceberg.blusapphire_view."fb814937_ngfw" AS SELECT * FROM iceberg.bluevents.ngfw WHERE "organization.id"='fb814937';
+CREATE VIEW iceberg.blusapphire_view."fb814937_proxy_mail" AS SELECT * FROM iceberg.bluevents.proxy_mail WHERE "organization.id"='fb814937';
+CREATE VIEW iceberg.blusapphire_view."fb814937_proxy_web" AS SELECT * FROM iceberg.bluevents.proxy_web WHERE "organization.id"='fb814937';
+CREATE VIEW iceberg.blusapphire_view."fb814937_ra" AS SELECT * FROM iceberg.bluevents.ra WHERE "organization.id"='fb814937';
+CREATE VIEW iceberg.blusapphire_view."fb814937_wireless" AS SELECT * FROM iceberg.bluevents.wireless WHERE "organization.id"='fb814937';
+CREATE VIEW iceberg.blusapphire_view."fb814937_alert" AS SELECT * FROM iceberg.bluevents.alert WHERE "organization.id"='fb814937';
+CREATE VIEW iceberg.blusapphire_view."fb814937_nas" AS SELECT * FROM iceberg.bluevents.nas WHERE "organization.id"='fb814937';
+CREATE VIEW iceberg.blusapphire_view."fb814937_windows" AS SELECT * FROM iceberg.bluevents.windows WHERE "organization.id"='fb814937';
+CREATE VIEW iceberg.blusapphire_view."fb814937_fallback" AS SELECT * FROM iceberg.bluevents.fallback WHERE "organization.id"='fb814937';
+
+CREATE VIEW iceberg.blusapphire_view."fb814937_webserver" AS SELECT * FROM iceberg.bluevents.webserver WHERE "organization.id"='fb814937';
+CREATE VIEW iceberg.blusapphire_view."fb814937_cloud_gcp" AS SELECT * FROM iceberg.bluevents.cloud_gcp WHERE "organization.id"='fb814937';
+
+
+
+############ CORRELATION QUERIES ################
+
+
+SELECT
+    JSON_OBJECT(
+        'count' VALUE CAST(LEAST(COUNT(CASE WHEN `rule.id` = 'a14ee9ea-378c-45f3-a657-f6a99cf846d9' THEN 1 ELSE NULL END), COUNT(CASE WHEN `rule.id` = 'b7de3297-30e9-4569-bf05-de01820b9ac0' THEN 1 ELSE NULL END)) AS STRING),
+        'observer' VALUE 'CORRELATION',
+        'Observables' VALUE JSON_OBJECT(
+            'observables_a14ee9ea-378c-45f3-a657-f6a99cf846d9' VALUE MAX(CASE WHEN `rule.id` = 'a14ee9ea-378c-45f3-a657-f6a99cf846d9' THEN observables ELSE NULL END),
+            'observables_b7de3297-30e9-4569-bf05-de01820b9ac0' VALUE MAX(CASE WHEN `rule.id` = 'b7de3297-30e9-4569-bf05-de01820b9ac0' THEN observables ELSE NULL END)
+        ), 
+        'alert' VALUE JSON_OBJECT(
+            'created' VALUE now(),
+            'kind' VALUE 'Alert',
+            'level' VALUE 'low'
+        ),
+        'uuid' VALUE JSON_OBJECT(
+            'uuid_ruleid_a14ee9ea-378c-45f3-a657-f6a99cf846d9' VALUE JSON_ARRAYAGG(CASE WHEN `rule.id` = 'a14ee9ea-378c-45f3-a657-f6a99cf846d9' THEN `uuid` ELSE NULL END),
+            'uuid_ruleid_b7de3297-30e9-4569-bf05-de01820b9ac0' VALUE JSON_ARRAYAGG(CASE WHEN `rule.id` = 'b7de3297-30e9-4569-bf05-de01820b9ac0' THEN `uuid` ELSE NULL END)
+        )
+    ) AS json_data
+FROM blu_prod_catalog.bluevents.alert
+WHERE `rule.id` IN ('a14ee9ea-378c-45f3-a657-f6a99cf846d9', 'b7de3297-30e9-4569-bf05-de01820b9ac0')
+  AND `alert.created` >= CAST(CURRENT_TIMESTAMP AS TIMESTAMP(6)) - INTERVAL '4' DAYS
+GROUP BY `host.name`
+HAVING COUNT(DISTINCT `rule.id`) = 2;
+
+
+SELECT JSON_OBJECT(
+    'count' VALUE CAST(LEAST(COUNT(CASE WHEN "rule.id" = 'a14ee9ea-378c-45f3-a657-f6a99cf846d9' THEN 1 ELSE NULL END), COUNT(CASE WHEN "rule.id" = 'b7de3297-30e9-4569-bf05-de01820b9ac0' THEN 1 ELSE NULL END)) AS VARCHAR),
+    'observer' VALUE 'CORRELATION',
+    'Observables' VALUE JSON_OBJECT(
+        'observables_a14ee9ea-378c-45f3-a657-f6a99cf846d9' VALUE MAX(CASE WHEN "rule.id" = 'a14ee9ea-378c-45f3-a657-f6a99cf846d9' THEN observables ELSE NULL END),
+        'observables_b7de3297-30e9-4569-bf05-de01820b9ac0' VALUE MAX(CASE WHEN "rule.id" = 'b7de3297-30e9-4569-bf05-de01820b9ac0' THEN observables ELSE NULL END)
+    ), 
+    'alert' VALUE JSON_OBJECT(
+        'created' VALUE CAST(now() AS VARCHAR),
+        'kind' VALUE 'Alert',
+        'level' VALUE 'low'
+    ),
+    'uuid' VALUE JSON_OBJECT(
+        'uuid_ruleid_a14ee9ea-378c-45f3-a657-f6a99cf846d9' VALUE ('[' || array_join(
+                array_agg(CASE WHEN "rule.id" = 'a14ee9ea-378c-45f3-a657-f6a99cf846d9' THEN "uuid" ELSE NULL END),
+                ','
+            ) || ']'),
+        'uuid_ruleid_b7de3297-30e9-4569-bf05-de01820b9ac0' VALUE ('[' || array_join(
+                array_agg(CASE WHEN "rule.id" = 'b7de3297-30e9-4569-bf05-de01820b9ac0' THEN "uuid" ELSE NULL END),
+                ','
+            ) || ']')
+    )
+) AS json_data
+FROM blu_prod_catalog.bluevents.alert
+WHERE "rule.id" IN ('a14ee9ea-378c-45f3-a657-f6a99cf846d9', 'b7de3297-30e9-4569-bf05-de01820b9ac0')
+  AND "alert.created" >= CURRENT_TIMESTAMP - INTERVAL '24' HOUR
+GROUP BY "host.name"
+HAVING COUNT(DISTINCT "rule.id") = 2;
